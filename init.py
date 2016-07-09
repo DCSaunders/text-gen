@@ -3,6 +3,15 @@ from MarkovGen import MarkovGen
 import sys
 import random
 
+def dictPick(d):
+    r = random.uniform(0, sum(d.itervalues()))
+    s = 0
+    for k, w in d.iteritems():
+        s += w
+        if r < s:
+            break
+    return k
+
 if len(sys.argv)<2:
     exit("Requires full urls, or file path prepended with 'file:'")
 else:
@@ -22,7 +31,7 @@ else:
             
             while sen_len < max_len:
                 pref = " ".join(line.split()[-pref_len:])
-                suff = random.choice(d[pref])
+                suff = dictPick(d[pref])
                 line += " %s" % suff
                 sen_len += suff_len
             print line

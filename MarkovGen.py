@@ -7,7 +7,7 @@ import re
 class MarkovGen(object):
     def get_markov(self):
         return self.markov
-
+    
     def gen_markov(self):
         allowed =  re.compile(r"^[^<>\(\)/=#{}_[\]+@~`]*$");
         self.markov = dict()
@@ -25,9 +25,15 @@ class MarkovGen(object):
                     p = " ".join(pref)
                     s = " ".join(suff)
                     if p in self.markov:
-                        self.markov[p].append(s)
+                        if s in self.markov[p]:
+                            self.markov[p][s]+=1
+                        else:
+                            self.markov[p][s]=1
                     else:
-                        self.markov[p] = [s]
+                        self.markov[p] = {s:1}
+                
+
+                        
         del self.raw_text
     def __init__(self, url, pref_len, suff_len):
         req = urllib2.Request(url)
@@ -39,7 +45,7 @@ class MarkovGen(object):
                 site_print = BeautifulSoup(site, 'html.parser')
                 self.raw_text = site_print.get_text()
             self.pref_len = pref_len # overlap between chain links
-            self.suff_len = suff_len # length of suffix following from each prefix
+            self.suff_len = suff_len # length of suffix following each prefix
 
             self.gen_markov()
         except Exception as e:
