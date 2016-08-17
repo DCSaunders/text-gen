@@ -1,26 +1,31 @@
 #!/usr/bin/env python
-import urllib2
 from bs4 import BeautifulSoup
+import sys
+import random
+import urllib2
 import collections
 import re
 
 class MarkovGen(object):
+    # Return the markov chain dictionary
     def get_markov(self):
         return self.markov
     
     def gen_markov(self):
-        allowed =  re.compile(r"^[^<>\(\)/=#{}_[\]+@~`]*$");
-        self.markov = dict()
+        allowed =  re.compile(r"^[^<>\(\)/=#{}_[\]+@~`]*$")
         pref = collections.deque()
         suff = collections.deque()
 
         for word in self.raw_text.split():
+            # Avoid strange characters from html etc
             if allowed.match(word):
                 suff.append(word)
+                
                 if len(suff)>self.suff_len:
                     pref.append(suff.popleft())
                     if len(pref)>self.pref_len:
                         pref.popleft()
+
                 if len(pref)==self.pref_len and len(suff)==self.suff_len:
                     p = " ".join(pref)
                     s = " ".join(suff)
@@ -31,12 +36,12 @@ class MarkovGen(object):
                             self.markov[p][s]=1
                     else:
                         self.markov[p] = {s:1}
-                
+        del self.raw_text # save memory
 
-                        
-        del self.raw_text
+    # Reads source file and requested prefix/suffix length
     def __init__(self, url, pref_len, suff_len):
         req = urllib2.Request(url)
+        self.markov = {}
         try:
             site = urllib2.urlopen(req)
             if url.startswith('file:'):    
@@ -55,3 +60,42 @@ class MarkovGen(object):
                 print "Error code %s filling request" % e.code
             else:
                 print e
+
+# Pick a suffix at random from weighted dictionary        
+def dictPick(d):
+    r = random.uniform(0, sum(d.itervalues()))
+    s = 0
+    for k, w in d.iteritems():
+        s += w
+        if r < s:
+            break
+    return k
+
+def main():
+    if len(sys.argv)<2:
+        exit("Needs file path prepended with 'file:', e.g. file:Documents/fic.txt")
+    else:
+        for url in sys.argv[1:]:
+            pref_len = 1
+            suff_len = 3
+            num_lines = 50
+            min_len = 7
+            max_len = 50
+            
+            mg = MarkovGen(url, pref_len, suff_len)
+            
+            d = mg.get_markov()
+            for ii in range (0, num_lines):
+                starter = random.choice(d.keys())
+                line = starter
+                sen_len = pref_len
+
+                while sen_len < max_len:
+                    pref = " ".join(line.split()[-pref_len:])
+                    suff = dictPick(d[pref])
+                    line += " %s" % suff
+                    sen_len += suff_len
+                print line
+
+if __name__ == '__main__':
+    main()
