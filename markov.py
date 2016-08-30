@@ -15,7 +15,7 @@ class MarkovGen(object):
         allowed =  re.compile(r"^[^<>\(\)/=#{}_[\]+@~`]*$")
         pref = collections.deque()
         suff = collections.deque()
-
+    
         for word in self.raw_text.split():
             # Avoid strange characters from html etc
             if allowed.match(word):
@@ -30,12 +30,9 @@ class MarkovGen(object):
                     p = " ".join(pref)
                     s = " ".join(suff)
                     if p in self.markov:
-                        if s in self.markov[p]:
-                            self.markov[p][s]+=1
-                        else:
-                            self.markov[p][s]=1
+                        self.markov[p][s] += 1
                     else:
-                        self.markov[p] = {s:1}
+                        self.markov[p] = collections.defaultdict(int, [(s,1)])
         del self.raw_text # save memory
 
     # Reads source file and requested prefix/suffix length
@@ -89,7 +86,6 @@ def main():
                 starter = random.choice(d.keys())
                 line = starter
                 sen_len = pref_len
-
                 while sen_len < max_len:
                     pref = " ".join(line.split()[-pref_len:])
                     suff = dictPick(d[pref])
