@@ -36,7 +36,7 @@ class MarkovGen(object):
         del self.raw_text # save memory
 
     # Reads source file and requested prefix/suffix length
-    def __init__(self, url, pref_len, suff_len):
+    def __init__(self, url, pref_len, suff_len, lower):
         req = urllib2.Request(url)
         self.markov = {}
         try:
@@ -46,6 +46,8 @@ class MarkovGen(object):
             else:
                 site_print = BeautifulSoup(site, 'html.parser')
                 self.raw_text = site_print.get_text()
+            if lower:
+                self.raw_text = self.raw_text.lower()
             self.pref_len = pref_len # overlap between chain links
             self.suff_len = suff_len # length of suffix following each prefix
 
@@ -73,13 +75,14 @@ def main():
         exit("Needs file path prepended with 'file:', e.g. file:Documents/fic.txt")
     else:
         for url in sys.argv[1:]:
-            pref_len = 1
-            suff_len = 3
+            pref_len = 2
+            suff_len = 1
             num_lines = 50
             min_len = 7
             max_len = 50
+            lower = True
             
-            mg = MarkovGen(url, pref_len, suff_len)
+            mg = MarkovGen(url, pref_len, suff_len, lower)
             
             d = mg.get_markov()
             for ii in range (0, num_lines):
